@@ -38,6 +38,9 @@ export YC_TOKEN=`yc iam create-token`
 ## Ansible роли
 
 ---
+
+Полный пример playbook можно найти [тут](./Playbook/)
+
 **MySQL**
 
 Для настройки кластера MySQL используется роль [mysql-cluster-role](https://github.com/nkiselyov/netology_roles/tree/main/mysql-cluster-role) \
