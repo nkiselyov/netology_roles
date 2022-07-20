@@ -1,0 +1,102 @@
+---
+- name: MySQL | Apply my.cnf config
+  become: true
+  ansible.builtin.template:
+    src: my.cnf.j2
+    dest: "{{ mysql_my_cnf_location }}"
+    mode: 0644
+  register: my_cnf
+  when:
+    - mysql_replication_role == 'primary' or mysql_replication_role == 'replica'
+
+- name: MySQL | Restart service on primary
+  become: true
+  ansible.builtin.service:
+    name: mysqld
+    state: restarted
+  when:
+    - mysql_replication_role == 'primary'
+    - my_cnf.changed
+
+- name: MySQL | Restart service on replica
+  become: true
+  ansible.builtin.service:
+    name: mysqld
+    state: restarted
+  when:
+    - mysql_replication_role == 'replica'
+    - my_cnf.changed
+
+- name: MySQL | Ensure replication user exists
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_login_username }}"
+    login_password: "{{ mysql_login_password }}"
+    name: "{{ mysql_replication_username }}"
+    password: "{{ mysql_replication_password }}"
+    host: "{{ mysql_replication_user_host }}"
+    priv: '*.*:REPLICATION SLAVE,REPLICATION CLIENT'
+    state: present
+  when:
+    - mysql_replication_role == 'primary'
+    - mysql_replication_username is defined
+  no_log: true
+
+- name: MySQL | Check get replica info
+  community.mysql.mysql_replication:
+    mode: getreplica
+    login_user: "{{ mysql_login_username }}"
+    login_password: "{{ mysql_login_password }}"
+  ignore_errors: true
+  register: replica
+  when:
+    - mysql_replication_role == 'replica'
+    - mysql_login_username is defined
+  no_log: true
+
+- name: MySQL | Check primary replication status
+  community.mysql.mysql_replication:
+    mode: getprimary
+    login_user: "{{ mysql_replication_username }}"
+    login_password: "{{ mysql_replication_password }}"
+    login_host: "{{ mysql_replication_primary_server }}"
+  register: primary
+  when:
+    - mysql_replication_role == 'replica'
+    - mysql_replication_username is defined
+  no_log: true
+
+- name: MySQL | configure MySQL replica process
+  community.mysql.mysql_replication:
+    login_user: "{{ mysql_login_username }}"
+    login_password: "{{ mysql_login_password }}"
+    primary_host: "{{ mysql_replication_primary_server }}"
+    primary_user: "{{ mysql_replication_username }}"
+    primary_password: "{{ mysql_replication_password }}"
+    primary_log_file: "{{ primary.File }}"
+    primary_log_pos: "{{ primary.Position }}"
+    mode: changeprimary
+  when:
+    - mysql_replication_role == 'replica'
+    - mysql_replication_primary_server != ""
+    - mysql_replication_username is defined
+    - not replica.Is_Replica or replica is failed
+    - primary.File is defined
+    - primary.Position is defined
+  no_log: true
+
+- name: MySQL | start MySQL replica process
+  community.mysql.mysql_replication:
+    mode: startreplica
+    login_user: "{{ mysql_login_username }}"
+    login_password: "{{ mysql_login_password }}"
+  when:
+    - mysql_replication_role == 'replica'
+    - mysql_replication_primary_server != ""
+    - not replica.Is_Replica or replica is failed
+    - primary.File is defined
+    - primary.Position is defined
+  no_log: true
+
+- name: Sleep for 15 seconds
+  ansible.builtin.wait_for:
+    timeout: 15

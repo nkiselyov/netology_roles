@@ -1,0 +1,12 @@
+---
+# defaults file for gitlabrunner-role
+gitlab_url: "http://example.com"
+gitlab_token: "exampleToken"
+runner_tags:
+  - docker
+  - prod
+runner_executor: "docker"
+runner_description: "runner-{{ ansible_hostname }}"
+runner_image: "alpine:latest"
+gitlab_external_host: "example.com"
+gitlab_external_ip: ""

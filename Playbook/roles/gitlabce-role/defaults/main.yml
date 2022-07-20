@@ -1,0 +1,8 @@
+---
+# defaults file for gitlabce-role
+external_url: "http://example.com"
+reverse_proxy_address: ""
+gitlab_initial_pass: ""
+gitlab_initial_runner_registration_token: ""
+gitlab_listen_port: 80
+gitlab_listen_https: "false"

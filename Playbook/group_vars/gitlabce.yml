@@ -1,0 +1,4 @@
+gitlab_initial_runner_registration_token: "5A2jF7ka5bY"
+reverse_proxy_address: "192.168.101.15"
+external_url: "https://gitlab.bylobyslavno.ru"
+gitlab_initial_pass: "123QWEasdzxc__"

@@ -1,0 +1,9 @@
+---
+- name: NGINX | Generate new cert Let`s Encrypt
+  become: true
+  ansible.builtin.command: >
+    sudo certbot --nginx -m {{ email }} -d {{ item.domain }} --agree-tos -n
+    {% if letsencrypt_staging %} --test-cert {% endif %}
+  when: item.new_cert
+  loop: "{{ sites }}"
+  notify: Nginx reload

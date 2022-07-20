@@ -1,0 +1,6 @@
+---
+# tasks file for mysql-cluster-role
+- include_tasks: install_mysql.yml
+  when: install_mysql
+- include_tasks: initial_setup.yml
+  when: initial_setup

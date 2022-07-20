@@ -1,0 +1,6 @@
+---
+# defaults file for mysql-cluster-role
+install_mysql: true
+initial_setup: true
+mysql_rpm: "mysql80-community-release-el7-6.noarch.rpm"
+mysql_root_password: "PassW0rd_"

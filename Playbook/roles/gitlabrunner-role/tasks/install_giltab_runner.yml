@@ -1,0 +1,80 @@
+---
+- name: Install gitlab runner | Check existing service
+  ansible.builtin.stat:
+    path: /etc/systemd/system/gitlab-runner.service
+  register: service_status
+
+- name: Install gitlab runner | Download Gitlab runner package repository
+  become: true
+  ansible.builtin.get_url:
+    url: https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh
+    dest: /tmp/gitlab-runner.script.rpm.sh
+    mode: 0644
+  when: not service_status.stat.exists
+
+- name: Install gitlab runner | Execute script gitlab-runner.script.rpm.sh
+  become: true
+  ansible.builtin.command:
+    bash /tmp/gitlab-runner.script.rpm.sh
+  when: not service_status.stat.exists
+
+- name: Install gitlab runner | Install gitlab runner package
+  become: true
+  ansible.builtin.yum:
+    name:
+      - gitlab-runner
+    state: present
+
+- name: Install gitlab runner | Add docker repo
+  become: true
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+    mode: 0644
+
+- name: Install gitlab runner | Install docker
+  become: true
+  ansible.builtin.yum:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    update_cache: true
+    state: present
+
+- name: Install gitlab runner | Ensure gitlab-runner is added to docker group
+  become: true
+  ansible.builtin.user:
+    name: gitlab-runner
+    groups: docker
+    append: true
+
+- name: Install gitlab runner | Enable docker service
+  become: true
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Install gitlab runner | Add git host to hosts file
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ gitlab_external_ip }} {{ gitlab_external_host }}"
+
+- name: Install gitlab runner | Register runner
+  become: true
+  ansible.builtin.command:
+    gitlab-runner register \
+    --description "{{ runner_description }}" \
+    --url "{{ gitlab_url }}" \
+    --registration-token "{{ gitlab_token }}" \
+    --non-interactive \
+    --executor "{{ runner_executor }}" \
+    --docker-image "{{ runner_image }}" \
+    --docker-privileged \
+    --tag-list "{{ runner_tags | join(',') }}" \
+    --docker-extra-hosts ""{{ gitlab_external_host }}:{{ gitlab_external_ip }}"" \
+    --run-untagged="true"
+  no_log: true

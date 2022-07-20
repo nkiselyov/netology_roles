@@ -1,0 +1,61 @@
+---
+- name: Grafana | Disable SELinux
+  become: true
+  ansible.posix.selinux:
+    state: disabled
+
+- name: Grafana | Add Grafana repository
+  become: true
+  ansible.builtin.template:
+    src: grafana.repo.j2
+    dest: /etc/yum.repos.d/grafana.repo
+    mode: 0644
+
+- name: Grafana | Install Grafana package
+  become: true
+  ansible.builtin.yum:
+    name:
+      - grafana
+    state: present
+    update_cache: true
+  notify: restart grafana
+
+- name: Grafana | Add Prometheus datasource
+  become: true
+  ansible.builtin.template:
+    src: grafana_datasources.yml.j2
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    owner: root
+    group: grafana
+    mode: 0640
+  notify: restart grafana
+
+- name: Grafana | Add dashboard provider
+  become: true
+  ansible.builtin.template:
+    src: grafana_dashboards_provider.yml.j2
+    dest: /etc/grafana/provisioning/dashboards/dashboards_provider.yml
+    owner: root
+    group: grafana
+    mode: 0640
+  notify: restart grafana
+
+- name: Grafana | Add node exporter dashboard
+  become: true
+  ansible.builtin.template:
+    src: grafana_nodeexporter_dashboard.json.j2
+    dest: "{{ grafana_dashboards_location }}/nodeexporter_dashboard.json"
+    owner: root
+    group: grafana
+    mode: 0640
+  notify: restart grafana
+
+- name: Grafana | Add mysqld exporter dashboard
+  become: true
+  ansible.builtin.template:
+    src: grafana_mysqldexporter_dashboard.json.j2
+    dest: "{{ grafana_dashboards_location }}/mysqldexporter_dashboard.json"
+    owner: root
+    group: grafana
+    mode: 0640
+  notify: restart grafana

@@ -1,0 +1,9 @@
+---
+wordpress_install: true
+wordpress_root_dir: "/var/www/wordpress"
+wordpress_server_name: localhost
+wordpress_db_name: "wordpress"
+wordpress_user_name: "wordpress"
+wordpress_user_pass: "wordpress"
+wordpress_db_address: localhost
+wordpress_site_url: "https://www.example.com"

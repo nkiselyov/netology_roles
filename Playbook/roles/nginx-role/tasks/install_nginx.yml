@@ -1,0 +1,32 @@
+---
+- name: Prometheus | Disable SELinux
+  become: true
+  ansible.posix.selinux:
+    state: disabled
+
+- name: NGINX | Install epel-release
+  become: true
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+- name: NGINX | Install nginx and certbot
+  become: true
+  ansible.builtin.yum:
+    name:
+      - nginx
+      - certbot
+      - certbot-nginx
+    state: present
+- name: NGINX | Systemd control
+  become: true
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started
+- name: NGINX | Apply nginx config
+  become: true
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: 0644
+  notify: Nginx reload

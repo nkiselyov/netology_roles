@@ -1,0 +1,5 @@
+---
+# tasks file for nginx-role
+- include_tasks: install_nginx.yml
+- include_tasks: setup_reverse_proxy.yml
+- include_tasks: new_cert.yml

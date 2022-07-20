@@ -1,0 +1,33 @@
+sites:
+  - domain: www.bylobyslavno.ru
+    upstreams:
+      - { backend_address: 192.168.101.13, backend_port: 80 }
+    proxy_pass: http://www.bylobyslavno.ru
+    new_cert: true
+    add_config: true
+  - domain: gitlab.bylobyslavno.ru
+    upstreams:
+      - { backend_address: 192.168.101.4, backend_port: 80 }
+    proxy_pass: http://gitlab.bylobyslavno.ru
+    new_cert: true
+    add_config: true
+  - domain: grafana.bylobyslavno.ru
+    upstreams:
+      - { backend_address: 192.168.101.5, backend_port: 3000 }
+    proxy_pass: http://grafana.bylobyslavno.ru
+    new_cert: true
+    add_config: true
+  - domain: prometheus.bylobyslavno.ru
+    upstreams:
+      - { backend_address: 192.168.101.5, backend_port: 9090 }
+    proxy_pass: http://prometheus.bylobyslavno.ru
+    new_cert: true
+    add_config: true
+  - domain: alertmanager.bylobyslavno.ru
+    upstreams:
+      - { backend_address: 192.168.101.5, backend_port: 9093 }
+    proxy_pass: http://alertmanager.bylobyslavno.ru
+    new_cert: true
+    add_config: true
+email: nkiselyov94@gmail.com
+letsencrypt_staging: false

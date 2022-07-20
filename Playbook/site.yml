@@ -1,0 +1,30 @@
+---
+- name: mysql
+  hosts: mysql
+  roles:
+    - mysql-cluster-role
+
+- name: wordpress
+  hosts: wordpress
+  roles:
+    - wordpress
+
+- name: gitlab
+  hosts: gitlabce
+  roles:
+    - gitlabce-role
+
+- name: gitlabrunner
+  hosts: gitlabrunner
+  roles:
+    - gitlabrunner-role
+
+- name: monitoring
+  hosts: all
+  roles:
+    - monitoring-role
+
+- name: nginx
+  hosts: nginx
+  roles:
+    - nginx-role

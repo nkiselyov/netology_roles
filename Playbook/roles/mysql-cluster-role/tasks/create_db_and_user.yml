@@ -1,0 +1,20 @@
+---
+- name: MySQL | Create "{{ mysql_new_db_name }}" DB
+  community.mysql.mysql_db:
+    state: present
+    name: "{{ mysql_new_db_name }}"
+    login_user: "{{ mysql_login_username }}"
+    login_password: "{{ mysql_login_password }}"
+  no_log: true
+
+- name: MySQL | Create user with full access for "{{ mysql_new_db_name }}" DB
+  community.mysql.mysql_user:
+    state: present
+    host: "%"
+    name: "{{ mysql_new_user_name }}"
+    password: "{{ mysql_new_user_pass }}"
+    login_user: root
+    login_password: "{{ mysql_login_password }}"
+    priv:
+      "{{ mysql_new_db_name }}.*:ALL"
+  no_log: true

@@ -1,0 +1,36 @@
+---
+# handlers file for monitoring-role
+- name: reload Prometheus service
+  become: true
+  ansible.builtin.systemd:
+    name: prometheus
+    enabled: true
+    daemon_reload: true
+    state: restarted
+
+- name: restart Prometheus service
+  become: true
+  ansible.builtin.systemd:
+    name: prometheus
+    state: restarted
+
+- name: reload alertmanager service
+  become: true
+  ansible.builtin.systemd:
+    name: alertmanager
+    enabled: true
+    daemon_reload: true
+    state: restarted
+
+- name: restart mysqld_exporter service
+  become: true
+  ansible.builtin.systemd:
+    name: mysqld_exporter
+    state: restarted
+
+- name: restart grafana
+  become: true
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: true
+    state: restarted

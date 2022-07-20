@@ -1,0 +1,38 @@
+---
+wordpress:
+  hosts:
+    wordpress-01:
+      ansible_host: 192.168.101.13
+      ansible_port: 2222
+mysql:
+  children:
+    primary:
+      hosts:
+        prod-db01:
+          ansible_host: 192.168.101.8
+          ansible_port: 2222
+    replica:
+      hosts:
+        prod-db02:
+          ansible_host: 192.168.102.34
+          ansible_port: 2222
+nginx:
+  hosts:
+    nginx-01:
+      ansible_host: 192.168.101.15
+      ansible_port: 2222
+gitlabce:
+  hosts:
+    gitlab-ce01:
+      ansible_host: 192.168.101.4
+      ansible_port: 2222
+gitlabrunner:
+  hosts:
+    gitlab-runner01:
+      ansible_host: 192.168.101.31
+      ansible_port: 2222
+monitoring:
+  hosts:
+    prometheus-01:
+      ansible_host: 192.168.101.5
+      ansible_port: 2222

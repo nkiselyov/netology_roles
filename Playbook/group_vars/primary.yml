@@ -1,0 +1,2 @@
+mysql_replication_role: "primary"
+is_mysqldexporter: true

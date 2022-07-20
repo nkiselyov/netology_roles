@@ -1,0 +1,14 @@
+---
+# handlers file for gitlabce-role
+- name: Change template for Gitlab CE
+  become: true
+  ansible.builtin.template:
+    src: gitlab.rb.j2
+    dest: /etc/gitlab/gitlab.rb
+    mode: 0600
+  no_log: true
+
+- name: Gitlab reconfigure
+  become: true
+  ansible.builtin.command:
+    gitlab-ctl reconfigure

@@ -1,0 +1,33 @@
+---
+# defaults file for nginx-role
+email: someone@example.com
+
+letsencrypt_staging: true
+
+sites:
+  - domain: www.example.com
+    upstreams:
+      - { backend_address: 192.168.101.22, backend_port: 80 }
+      - { backend_address: 192.168.101.22, backend_port: 8080 }
+    proxy_pass: http://www.example.com
+    new_cert: false
+    add_config: false
+
+reverse_proxy_config: |
+  upstream {{ item.domain }} {
+  {% for upstream in item.upstreams %}
+      server {{ upstream.backend_address }}:{{ upstream.backend_port }};
+  {% endfor %}
+  }
+
+  server {
+      listen 80;
+      server_name {{ item.domain }};
+      location / {
+         proxy_pass {{ item.proxy_pass }};
+         proxy_set_header        X-Real-IP $remote_addr;
+         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+         proxy_set_header        X-Forwarded-Proto $scheme;
+         proxy_set_header        Host $host;
+      }
+  }

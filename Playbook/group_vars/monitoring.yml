@@ -1,0 +1,3 @@
+is_alertmanager: true
+is_prometheus: true
+is_grafana: true
