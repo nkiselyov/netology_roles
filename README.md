@@ -462,6 +462,7 @@ deploy_wordpress:
 Добавим в файл wp-blog-header.php строку "/* test CI/CD Pipeline". После коммита отрабатывает pipeline
 
 ![](./img/gitlab_pipeline.png)
+![](./img/gitlab_editor.png)
 
 На сервере файл также изменился
 
