@@ -1,0 +1,4 @@
+---
+# tasks file for wordpress
+- include_tasks: install_configure_apache.yml
+- include_tasks: install_wordpress.yml

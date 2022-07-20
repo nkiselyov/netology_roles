@@ -1,0 +1,12 @@
+---
+## tasks file for monitoring-role
+- include_tasks: nodeexporter.yml
+  when: is_nodeexporter
+- include_tasks: mysqldexporter.yml
+  when: is_mysqldexporter
+- include_tasks: prometheus.yml
+  when: is_prometheus
+- include_tasks: alertmanager.yml
+  when: is_alertmanager
+- include_tasks: grafana.yml
+  when: is_grafana

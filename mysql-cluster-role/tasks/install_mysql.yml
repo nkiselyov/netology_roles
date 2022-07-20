@@ -1,0 +1,45 @@
+---
+- name: MySQL | Install epel-release
+  become: true
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+
+- name: MySQL | Install python2-PyMySQL
+  become: true
+  when: ansible_python_version < "3.0.0"
+  ansible.builtin.yum:
+    name: python2-PyMySQL
+    state: present
+
+- name: MySQL | Install python36-PyMySQL
+  become: true
+  when: ansible_python_version >= "3.0.0"
+  ansible.builtin.yum:
+    name: python36-PyMySQL
+    state: present
+
+- name: MySQL | Install MySQL rpm
+  become: true
+  ansible.builtin.yum:
+    name: "https://repo.mysql.com/{{ mysql_rpm }}"
+    state: present
+
+- name: MySQL | Import GPG key from a url
+  become: true
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+
+- name: MySQL | Install mysql-server
+  become: true
+  ansible.builtin.yum:
+    name: mysql-community-server
+    state: present
+
+- name: MySQL | Systemd control
+  become: true
+  ansible.builtin.service:
+    name: mysqld
+    enabled: true
+    state: started

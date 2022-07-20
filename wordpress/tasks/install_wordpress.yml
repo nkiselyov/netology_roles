@@ -1,0 +1,55 @@
+---
+- name: Wordpress | Disable SELinux
+  become: true
+  ansible.posix.selinux:
+    state: disabled
+
+- name: Wordpress | Check if wordpress exist
+  become: true
+  ansible.builtin.stat:
+    path: "{{ wordpress_root_dir }}"
+  register: wordpress_folder
+
+
+- name: Wordpress | Download and unarchive wordpress
+  become: true
+  ansible.builtin.unarchive:
+    src: "https://wordpress.org/latest.tar.gz"
+    dest: /var/www
+    remote_src: true
+  when:
+    - wordpress_install
+    - not wordpress_folder.stat.exists
+
+- name: Wordpress | Set permissions to wordpress directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ wordpress_root_dir }}"
+    owner: apache
+    group: apache
+    mode: 0775
+    recurse: true
+  when: wordpress_install
+
+- name: Wordpress | Apache apply config
+  become: true
+  ansible.builtin.template:
+    src: wordpress.conf.j2
+    dest: /etc/httpd/conf.d/wordpress.conf
+    mode: 0644
+
+- name: Wordpress | Wordpress apply config
+  become: true
+  ansible.builtin.template:
+    src: wp-config.php.j2
+    dest: "{{ wordpress_root_dir }}/wp-config.php"
+    mode: 0775
+    owner: apache
+    group: apache
+  no_log: true
+
+- name: Wordpress | Apache restart service
+  become: true
+  ansible.builtin.service:
+    name: httpd
+    state: restarted

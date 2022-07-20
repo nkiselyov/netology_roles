@@ -1,0 +1,46 @@
+---
+# defaults file for monitoring-role
+prometheus_folder: /var/lib/prometheus
+prometheus_config_folder: /etc/prometheus
+prometheus_install: true
+prometheus_version: 2.37.0
+prometheus_scrape_configs: |
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "nodeexporter"
+    file_sd_configs:
+      - files:
+          - {{ prometheus_config_folder }}/targets/node.yml
+  - job_name: "mysqldexporter"
+    file_sd_configs:
+      - files:
+          - {{ prometheus_config_folder }}/targets/mysql.yml
+is_prometheus: false
+
+alertmanager_folder: /var/lib/alertmanager
+alertmanager_config_folder: /etc/alertmanager
+alertmanager_install: true
+alertmanager_version: 0.24.0
+is_alertmanager: false
+
+nodeexporter_folder: /var/lib/nodeexporter
+nodeexporter_config_folder: /etc/nodeexporter
+nodeexporter_install: true
+nodeexp_version: 1.3.1
+is_nodeexporter: false
+
+grafana_dashboards_location: /etc/grafana/provisioning/dashboards
+is_grafana: false
+
+mysqldexporter_folder: /var/lib/mysqldexporter
+mysqldexporter_config_folder: /etc/mysqldexporter
+mysqldexporter_install: true
+mysqldexporter_version: 0.14.0
+mysqldexporter_mysql_user: mysqldexporter
+mysqldexporter_mysql_pass: mysqldexporter
+mysqldexporter_mysql_host: localhost
+mysqldexporter_mysql_port: 3306
+mysqldexporter_mysql_login_user: root
+mysqldexporter_mysql_login_pass: "PassW0rd_"
+is_mysqldexporter: false

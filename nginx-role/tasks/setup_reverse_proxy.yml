@@ -1,0 +1,9 @@
+- name: NGINX | Add config for backend
+  become: true
+  ansible.builtin.template:
+    src: proxy_backend.j2
+    dest: "/etc/nginx/conf.d/{{ item.domain }}.conf"
+    mode: "0644"
+  when: item.add_config
+  loop: "{{ sites }}"
+  notify: Nginx reload

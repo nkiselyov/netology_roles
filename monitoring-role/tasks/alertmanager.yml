@@ -1,0 +1,94 @@
+---
+- name: Alertmanager | Disable SELinux
+  become: true
+  ansible.posix.selinux:
+    state: disabled
+
+- name: Alertmanager | Create Alertmanager group
+  become: true
+  ansible.builtin.group:
+    name: alertmanager
+    system: true
+    state: present
+
+- name: Alertmanager | Create Alertmanager user
+  become: true
+  ansible.builtin.user:
+    name: alertmanager
+    create_home: false
+    shell: "/usr/sbin/nologin"
+    group: alertmanager
+    system: true
+    state: present
+    home: "{{ alertmanager_folder }}"
+
+- name: Alertmanager | Create directory for Alertmanager
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: alertmanager
+    group: alertmanager
+    mode: 0755
+    path: "{{ alertmanager_folder }}"
+
+- name: Alertmanager | Create configuration directory for Alertmanager
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: root
+    group: alertmanager
+    mode: 0770
+    path: "{{ alertmanager_config_folder }}"
+
+- name: Download and unarchive Alertmanager
+  block:
+    - name: Alertmanager | Download archive
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/alertmanager/releases/download/v{{ alertmanager_version }}/alertmanager-{{ alertmanager_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/alertmanager-{{ alertmanager_version }}.linux-amd64.tar.gz"
+        mode: 0755
+
+    - name: Alertmanager | Unarchive Alertmanager tar.gz
+      ansible.builtin.unarchive:
+        src: "/tmp/alertmanager-{{ alertmanager_version }}.linux-amd64.tar.gz"
+        dest: /tmp
+        mode: 0755
+        remote_src: true
+
+    - name: Alertmanager | Copy binary to bin folder
+      become: true
+      ansible.builtin.copy:
+        src: "/tmp/alertmanager-{{ alertmanager_version }}.linux-amd64/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: 0755
+        owner: alertmanager
+        group: alertmanager
+        remote_src: true
+      loop:
+        - amtool
+        - alertmanager
+
+    - name: Alertmanager | Copy config files
+      become: true
+      ansible.builtin.copy:
+        src: "/tmp/alertmanager-{{ alertmanager_version }}.linux-amd64/{{ item }}"
+        dest: "{{ alertmanager_config_folder }}/{{ item }}"
+        mode: 0755
+        owner: alertmanager
+        group: alertmanager
+        remote_src: true
+      loop:
+        - alertmanager.yml
+  when:
+    - alertmanager_install
+
+- name: Alertmanager | Create service unit
+  become: true
+  ansible.builtin.template:
+    src: alertmanager.service.j2
+    dest: /etc/systemd/system/alertmanager.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload alertmanager service

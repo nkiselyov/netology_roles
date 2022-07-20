@@ -1,0 +1,47 @@
+---
+- name: Install gitlab-ce | Check if gitlab exist
+  ansible.builtin.stat:
+    path: /etc/gitlab
+  register: gitlab_stat
+
+- name: Install gitlab-ce | Install dependencies
+  become: true
+  ansible.builtin.yum:
+    name:
+      - curl
+      - policycoreutils-python
+      - openssh-server
+      - perl
+      - postfix
+    state: present
+
+- name: Install gitlab-ce | Enable postfix
+  become: true
+  ansible.builtin.service:
+    name: postfix
+    enabled: true
+    state: started
+
+- name: Install gitlab-ce | Download Gitlab package repository
+  become: true
+  ansible.builtin.get_url:
+    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
+    dest: /tmp/gitlab.script.rpm.sh
+    mode: 0644
+  when: not gitlab_stat.stat.exists
+
+- name: Install gitlab-ce | Execute script script.rpm.sh
+  become: true
+  ansible.builtin.command:
+    bash /tmp/gitlab.script.rpm.sh
+  when: not gitlab_stat.stat.exists
+
+- name: Install gitlab-ce | Install gitlab-CE
+  become: true
+  ansible.builtin.yum:
+    name:
+      - gitlab-ce
+    state: present
+  notify:
+    - Change template for Gitlab CE
+    - Gitlab reconfigure

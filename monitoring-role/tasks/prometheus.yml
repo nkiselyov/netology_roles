@@ -1,0 +1,163 @@
+---
+- name: Prometheus | Disable SELinux
+  become: true
+  ansible.posix.selinux:
+    state: disabled
+
+- name: Prometheus | Create prometheus group
+  become: true
+  ansible.builtin.group:
+    name: prometheus
+    system: true
+    state: present
+
+- name: Prometheus | Create prometheus user
+  become: true
+  ansible.builtin.user:
+    name: prometheus
+    create_home: false
+    shell: "/usr/sbin/nologin"
+    group: prometheus
+    system: true
+    state: present
+    home: "{{ prometheus_folder }}"
+
+- name: Prometheus | Create directory for prometheus
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+    path: "{{ prometheus_folder }}"
+
+- name: Prometheus | Create configuration directory for prometheus
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: root
+    group: prometheus
+    mode: 0770
+    path: "{{ prometheus_config_folder }}"
+
+- name: Prometheus | Create directory for file_sd_configs target
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0770
+    path: "{{ prometheus_config_folder }}/targets"
+
+- name: Prometheus | Create directory for Prometheus rules
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0770
+    path: "{{ prometheus_config_folder }}/rules"
+
+- name: Download and unarchive Prometheus
+  block:
+    - name: Prometheus | Download archive
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        mode: 0755
+
+    - name: Prometheus | Unarchive prometheus tar.gz
+      ansible.builtin.unarchive:
+        src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        dest: /tmp
+        mode: 0755
+        remote_src: true
+
+    - name: Prometheus | Copy binary to bin folder
+      become: true
+      ansible.builtin.copy:
+        src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: 0755
+        owner: prometheus
+        group: prometheus
+        remote_src: true
+      loop:
+        - promtool
+        - prometheus
+
+    - name: Prometheus | Copy console files
+      become: true
+      ansible.builtin.copy:
+        src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+        dest: "{{ prometheus_config_folder }}/{{ item }}"
+        mode: 0755
+        owner: prometheus
+        group: prometheus
+        remote_src: true
+      loop:
+        - console_libraries
+        - consoles
+  when:
+    - prometheus_install
+
+- name: Prometheus | Update prometheus_rules file
+  become: true
+  ansible.builtin.template:
+    src: prometheus_rules.yml.j2
+    dest: /etc/prometheus/rules/prometheus_rules.yml
+    mode: 0755
+  notify:
+    - restart Prometheus service
+
+- name: Prometheus | Update nodeexporter_rules file
+  become: true
+  ansible.builtin.template:
+    src: nodeexporter_rules.yml.j2
+    dest: /etc/prometheus/rules/nodeexporter_rules.yml
+    mode: 0755
+  notify:
+    - restart Prometheus service
+
+- name: Prometheus | Update mysqlexporter_rules file
+  become: true
+  ansible.builtin.template:
+    src: mysqlexporter_rules.yml.j2
+    dest: /etc/prometheus/rules/mysqlexporter_rules.yml
+    mode: 0755
+  notify:
+    - restart Prometheus service
+
+- name: Prometheus | Update config file
+  become: true
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    mode: 0755
+  notify:
+    - restart Prometheus service
+
+- name: Prometheus | Update nodeexporter target file_sd_configs
+  become: true
+  ansible.builtin.template:
+    src: node.yml.j2
+    dest: /etc/prometheus/targets/node.yml
+    mode: 0755
+
+- name: Prometheus | Update mysql target file_sd_configs
+  become: true
+  ansible.builtin.template:
+    src: mysql.yml.j2
+    dest: /etc/prometheus/targets/mysql.yml
+    mode: 0755
+
+- name: Prometheus | Create service unit
+  become: true
+  ansible.builtin.template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload Prometheus service

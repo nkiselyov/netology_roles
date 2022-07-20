@@ -1,0 +1,47 @@
+---
+- name: MySQL | Get Service Status
+  ansible.builtin.systemd:
+    name: "mysqld"
+  register: mysqld_service_status
+
+- name: MySQL | Check login to mysql
+  ansible.builtin.shell: |
+    mysql -B --user root --password="{{ mysql_root_password }}" \
+    -ANe"SELECT CURRENT_USER();"
+  register: mysql_output
+  ignore_errors: true
+  when: mysqld_service_status.status.ActiveState == "active"
+  no_log: true
+
+- name: MySQL | Get temporary password from install log
+  become: true
+  ansible.builtin.shell: |
+    set -o pipefail
+    cat /var/log/mysqld.log | grep "temporary password" | grep -oE '[^ ]+$'
+  register: tmp_root_password
+  when: mysql_output is failed
+
+- name: MySQL | Update expired user password
+  ansible.builtin.shell: |
+    mysql --user root --password="{{ tmp_root_password.stdout }}" \
+    --connect-expired-password --execute="ALTER USER 'root'@'localhost' \
+    IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';"
+  when: mysql_output is failed
+  no_log: true
+
+- name: MySQL | Removes all anonymous user accounts
+  community.mysql.mysql_user:
+    name: ''
+    host_all: true
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  no_log: true
+
+- name: MySQL | Removes the MySQL test database
+  community.mysql.mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  no_log: true

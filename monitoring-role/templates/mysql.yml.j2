@@ -1,0 +1,6 @@
+- targets:
+{% for host in groups['all'] %}
+{% if hostvars[host]['is_mysqldexporter'] is defined and hostvars[host]['is_mysqldexporter'] == true %}
+    - {{ hostvars[host]['ansible_host'] }}:9104
+{% endif %}
+{% endfor %}
